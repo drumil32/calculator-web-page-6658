@@ -1,14 +1,46 @@
 const display = document.querySelector('#display');
 const keypad = document.querySelector('.keypad');
+const themeToggle = document.querySelector('#theme-toggle');
+const root = document.documentElement;
 
 let expression = '';
 let lastExpression = '';
-let lastResult = '';
 let justEvaluated = false;
 let invalidState = false;
 
 const operatorSymbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
 const precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
+const storageKey = 'calculator-theme';
+
+function getStoredTheme() {
+  try {
+    return localStorage.getItem(storageKey);
+  } catch {
+    return null;
+  }
+}
+
+function storeTheme(theme) {
+  try {
+    localStorage.setItem(storageKey, theme);
+  } catch {
+    // Storage may be unavailable; theme still changes for this session.
+  }
+}
+
+function applyTheme(theme) {
+  root.dataset.theme = theme;
+  const isDark = theme === 'dark';
+  themeToggle.setAttribute('aria-label', `Switch to ${isDark ? 'light' : 'dark'} mode`);
+  themeToggle.setAttribute('aria-pressed', String(isDark));
+  themeToggle.querySelector('.theme-toggle__icon').textContent = isDark ? '☾' : '☀';
+  themeToggle.querySelector('.theme-toggle__text').textContent = isDark ? 'Dark' : 'Light';
+}
+
+function initTheme() {
+  const preferred = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  applyTheme(getStoredTheme() || preferred);
+}
 
 function updateDisplay(value = expression) {
   display.textContent = value ? formatForDisplay(value) : '0';
@@ -47,7 +79,7 @@ function appendValue(value) {
     }
     const number = currentNumber();
     if (number.includes('.')) return;
-    expression += number === '' || expression.endsWith('-') && isOperator(expression.at(-2)) ? '0.' : '.';
+    expression += number === '' || (expression.endsWith('-') && isOperator(expression.at(-2))) ? '0.' : '.';
     updateDisplay();
     return;
   }
@@ -80,7 +112,6 @@ function addOperator(operator) {
 function clearCalculator() {
   expression = '';
   lastExpression = '';
-  lastResult = '';
   justEvaluated = false;
   invalidState = false;
   updateDisplay();
@@ -144,10 +175,23 @@ function evaluateTokens(tokens) {
   return values[0];
 }
 
+function getExpressionValue() {
+  let input = expression.replace(/[+\-*/.]$/, '');
+  if (!input) return 0;
+  return evaluateTokens(tokenize(input));
+}
+
 function formatResult(number) {
   if (!Number.isFinite(number)) throw new Error('Invalid result');
   const rounded = Number.parseFloat(number.toPrecision(12));
-  return String(rounded);
+  return Object.is(rounded, -0) ? '0' : String(rounded);
+}
+
+function showError(message) {
+  expression = '';
+  justEvaluated = false;
+  invalidState = true;
+  display.textContent = message;
 }
 
 function equals() {
@@ -161,16 +205,41 @@ function equals() {
 
     const result = formatResult(evaluateTokens(tokenize(input)));
     lastExpression = input;
-    lastResult = result;
     expression = result;
     justEvaluated = true;
     invalidState = false;
     updateDisplay(result);
   } catch (error) {
-    expression = '';
-    justEvaluated = false;
-    invalidState = true;
-    display.textContent = error.message.includes('zero') ? 'Cannot divide by zero' : 'Error';
+    showError(error.message.includes('zero') ? 'Cannot divide by zero' : 'Error');
+  }
+}
+
+function applyAdvancedOperation(operation) {
+  try {
+    if (invalidState) clearCalculator();
+    const value = getExpressionValue();
+    let result;
+
+    if (operation === 'percent') result = value / 100;
+    if (operation === 'sqrt') {
+      if (value < 0) throw new Error('Negative square root');
+      result = Math.sqrt(value);
+    }
+    if (operation === 'square') result = value * value;
+    if (operation === 'reciprocal') {
+      if (value === 0) throw new Error('Cannot divide by zero');
+      result = 1 / value;
+    }
+
+    expression = formatResult(result);
+    lastExpression = '';
+    justEvaluated = true;
+    invalidState = false;
+    updateDisplay(expression);
+  } catch (error) {
+    if (error.message.includes('Negative')) showError('Invalid √');
+    else if (error.message.includes('zero')) showError('Cannot divide by zero');
+    else showError('Error');
   }
 }
 
@@ -179,9 +248,16 @@ keypad.addEventListener('click', event => {
   if (!button) return;
 
   if (button.dataset.value) appendValue(button.dataset.value);
+  if (button.dataset.advanced) applyAdvancedOperation(button.dataset.advanced);
   if (button.dataset.action === 'clear') clearCalculator();
   if (button.dataset.action === 'delete') deleteLast();
   if (button.dataset.action === 'equals') equals();
+});
+
+themeToggle.addEventListener('click', () => {
+  const nextTheme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(nextTheme);
+  storeTheme(nextTheme);
 });
 
 document.addEventListener('keydown', event => {
@@ -192,9 +268,14 @@ document.addEventListener('keydown', event => {
   else if (key === 'Enter' || key === '=') equals();
   else if (key === 'Backspace') deleteLast();
   else if (key === 'Escape' || key.toLowerCase() === 'c') clearCalculator();
+  else if (key === '%') applyAdvancedOperation('percent');
+  else if (key.toLowerCase() === 'r') applyAdvancedOperation('sqrt');
+  else if (key.toLowerCase() === 's') applyAdvancedOperation('square');
+  else if (key.toLowerCase() === 'i') applyAdvancedOperation('reciprocal');
   else return;
 
   event.preventDefault();
 });
 
+initTheme();
 updateDisplay();
