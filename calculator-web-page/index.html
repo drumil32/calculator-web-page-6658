@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Responsive Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app" aria-labelledby="calculator-title">
+    <section class="calculator" aria-label="Calculator">
+      <header class="calculator__header">
+        <div>
+          <p class="eyebrow">Vanilla JS</p>
+          <h1 id="calculator-title">Calculator</h1>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light mode" aria-pressed="true">
+          <span class="theme-toggle__icon" aria-hidden="true">☾</span>
+          <span class="theme-toggle__text">Dark</span>
+        </button>
+      </header>
+
+      <output class="display" id="display" aria-live="polite" aria-label="Calculator display">0</output>
+
+      <div class="keypad" role="group" aria-label="Calculator keys">
+        <button class="key key--action" type="button" data-action="clear" aria-label="Clear calculator">AC</button>
+        <button class="key key--action" type="button" data-action="delete" aria-label="Delete last character">DEL</button>
+        <button class="key key--advanced" type="button" data-advanced="percent" aria-label="Percentage">%</button>
+        <button class="key key--operator" type="button" data-value="/" aria-label="Divide">÷</button>
+
+        <button class="key key--advanced" type="button" data-advanced="sqrt" aria-label="Square root">√x</button>
+        <button class="key key--advanced" type="button" data-advanced="square" aria-label="Square">x²</button>
+        <button class="key key--advanced" type="button" data-advanced="reciprocal" aria-label="Reciprocal">1/x</button>
+        <button class="key key--operator" type="button" data-value="*" aria-label="Multiply">×</button>
+
+        <button class="key" type="button" data-value="7" aria-label="Seven">7</button>
+        <button class="key" type="button" data-value="8" aria-label="Eight">8</button>
+        <button class="key" type="button" data-value="9" aria-label="Nine">9</button>
+        <button class="key key--operator" type="button" data-value="-" aria-label="Subtract">−</button>
+
+        <button class="key" type="button" data-value="4" aria-label="Four">4</button>
+        <button class="key" type="button" data-value="5" aria-label="Five">5</button>
+        <button class="key" type="button" data-value="6" aria-label="Six">6</button>
+        <button class="key key--operator" type="button" data-value="+" aria-label="Add">+</button>
+
+        <button class="key" type="button" data-value="1" aria-label="One">1</button>
+        <button class="key" type="button" data-value="2" aria-label="Two">2</button>
+        <button class="key" type="button" data-value="3" aria-label="Three">3</button>
+        <button class="key key--equals" type="button" data-action="equals" aria-label="Equals">=</button>
+
+        <button class="key key--zero" type="button" data-value="0" aria-label="Zero">0</button>
+        <button class="key" type="button" data-value="." aria-label="Decimal point">.</button>
+      </div>
+
+      <p class="hint">Keyboard: numbers, operators, Enter, Backspace, Escape, %, r for √, s for x², i for 1/x.</p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
